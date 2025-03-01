@@ -1,0 +1,38 @@
+# Entorno virtual
+venv/
+env/
+.env
+
+# Base de datos local
+*.db
+*.sqlite3
+
+# Archivos de caché de Python
+__pycache__/
+*.py[cod]
+*.class
+.pytest_cache/
+
+# Logs
+*.log
+
+# Archivos de configuración de IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Archivos de dependencias locales
+node_modules/
+
+# Archivos de credenciales
+*.pem
+*.key
+
+# Archivos compilados
+*.exe
+*.dll
+*.so
+*.dylib
+dist/
+build/
