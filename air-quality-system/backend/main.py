@@ -14,6 +14,9 @@ from repositories.crud import (
     QuadrantStatsRepository,
     PredictionRepository
 )
+from data_collectors.traffic_collector import TomTomTrafficCollector
+# Inicializar el colector
+traffic_collector = TomTomTrafficCollector()
 
 # Crear la aplicación FastAPI
 app = FastAPI()
@@ -102,11 +105,11 @@ async def get_air_quality_history(
         )
 
 @app.get("/api/traffic")
-async def get_traffic_data(db: Session = Depends(get_db)):
-    """Endpoint para obtener datos de tráfico"""
+async def get_traffic_data():
+    """Endpoint para obtener datos de tráfico en tiempo real"""
     try:
-        traffic_data = TrafficRepository.get_latest_traffic_data(db)
-        return [data.to_dict() for data in traffic_data]
+        traffic_data = await traffic_collector.get_traffic_data()
+        return traffic_data
     except Exception as e:
         print(f"Error en get_traffic_data: {str(e)}")
         raise HTTPException(
