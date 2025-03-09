@@ -62,156 +62,53 @@ const POLLUTANT_THRESHOLDS = {
         veryUnhealthy: 15.4
     }
 };
-const XALAPA_QUADRANTS = [
-    // Noroeste
+const XALAPA_MAIN_AREAS = [
     {
-      name: 'Noroeste-1',
+      name: 'Centro',
       bounds: {
-        north: 19.5800,
-        south: 19.5619,
-        east: -96.9601,
-        west: -97.0000
+        north: 19.5500, 
+        south: 19.5200,
+        east: -96.8900, 
+        west: -96.9250
       }
     },
     {
-      name: 'Noroeste-2',
+      name: 'Norte',
       bounds: {
-        north: 19.5800,
-        south: 19.5619,
-        east: -96.9102,
-        west: -96.9601
+        north: 19.5900,
+        south: 19.5500,
+        east: -96.8550,
+        west: -96.9750
       }
     },
     {
-      name: 'Noroeste-3',
+      name: 'Sur',
       bounds: {
-        north: 19.5619,
-        south: 19.5438,
-        east: -96.9601,
-        west: -97.0000
+        north: 19.5200,
+        south: 19.4900,
+        east: -96.8550,
+        west: -96.9750
       }
     },
     {
-      name: 'Noroeste-4',
+      name: 'Este',
       bounds: {
-        north: 19.5619,
-        south: 19.5438,
-        east: -96.9102,
-        west: -96.9601
-      }
-    },
-    // Noreste
-    {
-      name: 'Noreste-1',
-      bounds: {
-        north: 19.5800,
-        south: 19.5619,
-        east: -96.8551,
-        west: -96.9102
+        north: 19.5900,
+        south: 19.4900,
+        east: -96.7900,
+        west: -96.8900
       }
     },
     {
-      name: 'Noreste-2',
+      name: 'Oeste',
       bounds: {
-        north: 19.5800,
-        south: 19.5619,
-        east: -96.8000,
-        west: -96.8551
-      }
-    },
-    {
-      name: 'Noreste-3',
-      bounds: {
-        north: 19.5619,
-        south: 19.5438,
-        east: -96.8551,
-        west: -96.9102
-      }
-    },
-    {
-      name: 'Noreste-4',
-      bounds: {
-        north: 19.5619,
-        south: 19.5438,
-        east: -96.8000,
-        west: -96.8551
-      }
-    },
-    // Suroeste
-    {
-      name: 'Suroeste-1',
-      bounds: {
-        north: 19.5438,
-        south: 19.5219,
-        east: -96.9601,
-        west: -97.0000
-      }
-    },
-    {
-      name: 'Suroeste-2',
-      bounds: {
-        north: 19.5438,
-        south: 19.5219,
-        east: -96.9102,
-        west: -96.9601
-      }
-    },
-    {
-      name: 'Suroeste-3',
-      bounds: {
-        north: 19.5219,
-        south: 19.5000,
-        east: -96.9601,
-        west: -97.0000
-      }
-    },
-    {
-      name: 'Suroeste-4',
-      bounds: {
-        north: 19.5219,
-        south: 19.5000,
-        east: -96.9102,
-        west: -96.9601
-      }
-    },
-    // Sureste
-    {
-      name: 'Sureste-1',
-      bounds: {
-        north: 19.5438,
-        south: 19.5219,
-        east: -96.8551,
-        west: -96.9102
-      }
-    },
-    {
-      name: 'Sureste-2',
-      bounds: {
-        north: 19.5438,
-        south: 19.5219,
-        east: -96.8000,
-        west: -96.8551
-      }
-    },
-    {
-      name: 'Sureste-3',
-      bounds: {
-        north: 19.5219,
-        south: 19.5000,
-        east: -96.8551,
-        west: -96.9102
-      }
-    },
-    {
-      name: 'Sureste-4',
-      bounds: {
-        north: 19.5219,
-        south: 19.5000,
-        east: -96.8000,
-        west: -96.8551
+        north: 19.5900,
+        south: 19.4900,
+        east: -96.9250,
+        west: -97.0200
       }
     }
-];
+  ];
 
 
 
@@ -415,6 +312,8 @@ const AirQualityDashboard = () => {
     const [weatherData, setWeatherData] = useState(null);
     const [trafficData, setTrafficData] = useState(null);
     const [isUsingTrafficData, setIsUsingTrafficData] = useState(false);
+    const [showTrafficImpact, setShowTrafficImpact] = useState(true);
+    const currentOpenInfoWindow = useRef(null);
 
     // Referencias
     const mapRef = useRef(null);
@@ -554,70 +453,137 @@ useEffect(() => {
 useEffect(() => {
     const updateVisualization = () => {
         if (!googleMapRef.current || !window.google || !airQualityData) return;
-
+      
         // Limpiar visualizaciones anteriores
         if (heatmapRef.current) {
-            heatmapRef.current.setMap(null);
+          heatmapRef.current.setMap(null);
         }
         quadrantsRef.current.forEach(quadrant => {
-            if (quadrant) quadrant.setMap(null);
+          if (quadrant) quadrant.setMap(null);
         });
         quadrantsRef.current = [];
-
-        if (viewMode === 'heatmap') {
-            // Código existente para heatmap...
-        } else {
-            XALAPA_QUADRANTS.forEach(quadrant => {
-                // Pasar los datos de tráfico a la función de cálculo
-                const quality = calculateQuadrantAirQuality(quadrant, airQualityData);
-                if (!quality) return;
-
-                // Resto del código para crear rectángulos...
-                
-                // Añadir información de tráfico a la ventana de información
-                const infoWindow = new window.google.maps.InfoWindow({
-                    content: `
-                        <div style="padding: 12px; min-width: 200px;">
-                            <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">
-                                ${quadrant.name}
-                            </h3>
-                            <div style="display: grid; gap: 4px;">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>PM2.5:</span>
-                                    <span>${quality.averages.pm25.toFixed(2)} µg/m³</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>PM10:</span>
-                                    <span>${quality.averages.pm10.toFixed(2)} µg/m³</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>NO₂:</span>
-                                    <span>${quality.averages.no2.toFixed(2)} µg/m³</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>O₃:</span>
-                                    <span>${quality.averages.o3.toFixed(2)} µg/m³</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>CO:</span>
-                                    <span>${quality.averages.co.toFixed(2)} mg/m³</span>
-                                </div>
-                                ${quality.hasTrafficData ? 
-                                  `<div style="margin-top: 8px; font-style: italic; color: #4b5563;">
-                                      * Datos ajustados según tráfico
-                                   </div>` : ''}
-                            </div>
-                        </div>
-                    `
-                });
-
-                // Resto del código para eventos de ratón...
-            });
+        
+        // Cerrar cualquier ventana de información abierta
+        if (currentOpenInfoWindow.current) {
+          currentOpenInfoWindow.current.close();
+          currentOpenInfoWindow.current = null;
         }
-    };
+      
+        // Solo mostrar cuadrantes si showTrafficImpact es true
+        if (showTrafficImpact) {
+          XALAPA_MAIN_AREAS.forEach(area => {
+            // Buscar datos de tráfico para esta área
+            const areaTraffic = trafficData?.find(t => t.area_name === area.name) || null;
+            
+            // Calcular calidad del aire para este cuadrante
+            const quality = calculateQuadrantAirQuality(area, airQualityData);
+            if (!quality) return;
+      
+            // Crear el polígono del cuadrante
+            const rectangle = new window.google.maps.Rectangle({
+              bounds: new window.google.maps.LatLngBounds(
+                new window.google.maps.LatLng(area.bounds.south, area.bounds.west),
+                new window.google.maps.LatLng(area.bounds.north, area.bounds.east)
+              ),
+              strokeColor: '#FFFFFF',
+              strokeOpacity: 0.8,
+              strokeWeight: 2,
+              fillColor: quality.color,
+              fillOpacity: 0.35,
+              map: googleMapRef.current
+            });
+      
+            // Crear contenido para la ventana de información
+            const congestionLevel = areaTraffic ? `${areaTraffic.congestion_level?.toFixed(1) || 0}%` : '0.0%';
+            const currentSpeed = areaTraffic ? `${areaTraffic.current_speed?.toFixed(1) || 0} km/h` : 'N/A';
+            
+            // Calcular impactos en PM2.5 y NO2 basados en la congestión
+            const pm25Impact = areaTraffic ? `+${((areaTraffic.congestion_level || 0) * 0.35 / 100 * 100).toFixed(1)}%` : '+0.0%';
+            const no2Impact = areaTraffic ? `+${((areaTraffic.congestion_level || 0) * 0.45 / 100 * 100).toFixed(1)}%` : '+0.0%';
+            
+            const infoContent = `
+              <div style="padding: 12px; min-width: 220px;">
+                <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">
+                  ${area.name}
+                </h3>
+                <div style="display: grid; gap: 6px;">
+                  <div style="background-color: #f3f4f6; padding: 6px; border-radius: 4px;">
+                    <div style="font-weight: 600; margin-bottom: 4px; color: #4b5563;">Contaminantes</div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>PM2.5:</span>
+                      <span>${quality.averages.pm25.toFixed(2)} µg/m³</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>PM10:</span>
+                      <span>${quality.averages.pm10.toFixed(2)} µg/m³</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>NO₂:</span>
+                      <span>${quality.averages.no2.toFixed(2)} µg/m³</span>
+                    </div>
+                  </div>
+                  
+                  <div style="background-color: #dbeafe; padding: 6px; border-radius: 4px;">
+                    <div style="font-weight: 600; margin-bottom: 4px; color: #1e40af;">Tráfico</div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>Velocidad:</span>
+                      <span>${currentSpeed}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>Congestión:</span>
+                      <span>${congestionLevel}</span>
+                    </div>
+                  </div>
+                  
+                  <div style="background-color: #dcfce7; padding: 6px; border-radius: 4px;">
+                    <div style="font-weight: 600; margin-bottom: 4px; color: #166534;">Impacto</div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>En PM2.5:</span>
+                      <span>${pm25Impact}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                      <span>En NO₂:</span>
+                      <span>${no2Impact}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+      
+            const infoWindow = new window.google.maps.InfoWindow({
+              content: infoContent
+            });
+      
+            // Añadir eventos de mouse
+            rectangle.addListener('mouseover', () => {
+              rectangle.setOptions({ fillOpacity: 0.7 });
+            });
+      
+            rectangle.addListener('mouseout', () => {
+              rectangle.setOptions({ fillOpacity: 0.35 });
+            });
+      
+            rectangle.addListener('click', (e) => {
+              // Cerrar ventana de información previa si existe
+              if (currentOpenInfoWindow.current) {
+                currentOpenInfoWindow.current.close();
+              }
+              
+              // Abrir nueva ventana de información
+              infoWindow.setPosition(e.latLng);
+              infoWindow.open(googleMapRef.current);
+              
+              // Guardar referencia a la ventana actual
+              currentOpenInfoWindow.current = infoWindow;
+            });
+      
+            quadrantsRef.current.push(rectangle);
+          });
+        }
+      };
 
     updateVisualization();
-}, [viewMode, airQualityData, trafficData]); // Añadir trafficData como dependencia
+}, [viewMode, airQualityData, trafficData,showTrafficImpact]); // Añadir trafficData como dependencia
 
     const calculateQuadrantAirQuality = (quadrant, airData) => {
         // Obtener solo la última lectura de datos
@@ -672,183 +638,149 @@ useEffect(() => {
     // Renderizado del componente
     return (
         <div className="p-4">
-            {/* Indicador de fuente de datos */}
-            <div className={`p-2 mb-4 rounded ${
-                dataSource === 'real'
-                    ? 'bg-green-100 text-green-800'
-                    : dataSource === 'fallback'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-gray-100 text-gray-800'
-            }`}>
-                Fuente de datos: {
-                    dataSource === 'real'
-                        ? 'Datos reales'
-                        : dataSource === 'fallback'
-                            ? 'Datos de ejemplo'
-                            : 'Cargando...'
-                }
-            </div>
-            {/* Añadir después del indicador de fuente de datos */}
-{isUsingTrafficData && (
+  {/* Indicador de fuente de datos */}
+  <div className={`p-2 mb-4 rounded ${
+    dataSource === 'real'
+      ? 'bg-green-100 text-green-800'
+      : dataSource === 'fallback'
+        ? 'bg-yellow-100 text-yellow-800'
+        : 'bg-gray-100 text-gray-800'
+  }`}>
+    Fuente de datos: {
+      dataSource === 'real'
+        ? 'Datos reales'
+        : dataSource === 'fallback'
+          ? 'Datos de ejemplo'
+          : 'Cargando...'
+    }
+  </div>
+  
+  {isUsingTrafficData && (
     <div className="p-2 mb-4 rounded bg-blue-100 text-blue-800">
-        <div className="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <span>Usando datos de tráfico en tiempo real para mejorar precisión de estimaciones por zona</span>
-        </div>
+      <div className="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span>Usando datos de tráfico en tiempo real para mejorar precisión de estimaciones por zona</span>
+      </div>
     </div>
-)}
+  )}
 
-            {/* Botón de descarga */}
-            {airQualityData && weatherData && (
-                <button
-                    onClick={() => generateReport(airQualityData, weatherData)}
-                    className="absolute top-4 right-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded z-10"
-                >
-                    DESCARGAR REPORTE
-                </button>
-            )}
+  {/* Botón de descarga */}
+  {airQualityData && weatherData && (
+    <button
+      onClick={() => generateReport(airQualityData, weatherData)}
+      className="absolute top-4 right-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded z-10"
+    >
+      DESCARGAR REPORTE
+    </button>
+  )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 auto-rows-fr">
-                {/* Mapa */}
-                <div className="bg-white rounded-lg shadow-lg p-4 flex flex-col">
-                    <h2 className="text-xl font-bold mb-4">Mapa de Calidad del Aire</h2>
-                    <div className="relative flex-grow">
-                        <div
-                            ref={mapRef}
-                            className="w-full h-full rounded-lg"
-                            style={{ minHeight: '550px' }}
-                        />
-                        <MapLegend />
-                        <div className="absolute top-4 right-4 z-10">
-                            <button
-                                onClick={() => setViewMode(viewMode === 'heatmap' ? 'quadrants' : 'heatmap')}
-                                className="bg-white px-4 py-2 rounded shadow hover:bg-gray-100 transition-colors"
-                            >
-                                {viewMode === 'heatmap' ? 'Ver Cuadrantes' : 'Ver Heatmap'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                {/* Añadir después del componente de mapa */}
-{trafficData && trafficData.length > 0 && (
-    <div className="mt-4 bg-white rounded-lg shadow-lg p-4">
-        <h2 className="text-xl font-bold mb-4">Impacto del Tráfico en la Calidad del Aire</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {trafficData.map((point, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                        <h3 className="font-semibold">{point.area_name || `Zona ${index + 1}`}</h3>
-                        <span className={`px-2 py-1 rounded text-sm text-white ${
-                            point.traffic_level === 'high' ? 'bg-red-500' :
-                            point.traffic_level === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
-                        }`}>
-                            {point.traffic_level === 'high' ? 'Alto' :
-                             point.traffic_level === 'medium' ? 'Medio' : 'Bajo'}
-                        </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>Velocidad actual:</div>
-                        <div>{point.current_speed?.toFixed(1) || 'N/A'} km/h</div>
-                        <div>Nivel de congestión:</div>
-                        <div>{point.congestion_level?.toFixed(1) || 'N/A'}%</div>
-                        <div>Impacto en PM2.5:</div>
-                        <div>+{((point.congestion_level || 0) * 0.35 / 100 * 100).toFixed(1)}%</div>
-                        <div>Impacto en NO₂:</div>
-                        <div>+{((point.congestion_level || 0) * 0.45 / 100 * 100).toFixed(1)}%</div>
-                    </div>
-                </div>
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    {/* Mapa */}
+    <div className="bg-white rounded-lg shadow-lg p-4 flex flex-col">
+  <h2 className="text-xl font-bold mb-4">Mapa de Calidad del Aire</h2>
+  <div className="relative flex-grow">
+    <div
+      ref={mapRef}
+      className="w-full h-full rounded-lg"
+      style={{ minHeight: '550px' }}
+    />
+    <MapLegend />
+    <div className="absolute top-4 right-4 z-10">
+      <button
+        onClick={() => setShowTrafficImpact(!showTrafficImpact)}
+        className="bg-white px-4 py-2 rounded shadow hover:bg-gray-100 transition-colors"
+      >
+        {showTrafficImpact ? 'Ocultar Impacto Vehicular' : 'Ver Impacto Vehicular'}
+      </button>
+    </div>
+  </div>
+</div>
+
+    {/* Panel de Niveles de Contaminantes */}
+    <div className="bg-white rounded-lg shadow-lg p-4">
+      <h2 className="text-xl font-bold mb-4">Niveles de Contaminantes</h2>
+      {error ? (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">Error: {error}</p>
+        </div>
+      ) : !airQualityData ? (
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500">Cargando datos...</p>
+        </div>
+      ) : (
+        <>
+          {/* Gráfica */}
+          <LineChart width={600} height={300} data={airQualityData}>
+            <XAxis
+              dataKey="timestamp"
+              tickFormatter={(timestamp) => new Date(timestamp).toLocaleTimeString()}
+            />
+            <YAxis />
+            <Tooltip
+              formatter={(value, name, {dataKey}) => {
+                const pollutant = POLLUTANT_INFO[dataKey];
+                return [pollutant.format(value), pollutant.name];
+              }}
+              labelFormatter={(timestamp) => new Date(timestamp).toLocaleString()}
+            />
+            <Legend />
+            {Object.entries(POLLUTANT_INFO).map(([key, info]) => (
+              <Line
+                key={key}
+                type="monotone"
+                dataKey={key}
+                name={info.name}
+                stroke={
+                  key === 'pm25' ? '#8884d8' :
+                  key === 'pm10' ? '#82ca9d' :
+                  key === 'no2' ? '#ffc658' :
+                  key === 'o3' ? '#ff7300' :
+                  '#ff0000'
+                }
+                dot={false}
+              />
             ))}
-        </div>
-    </div>
-)}
+          </LineChart>
 
-                {/* Panel de Niveles de Contaminantes */}
-                <div className="space-y-4">
-                    <div className="bg-white rounded-lg shadow-lg p-4">
-                        <h2 className="text-xl font-bold mb-4">Niveles de Contaminantes</h2>
-                        {error ? (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                <p className="text-red-600">Error: {error}</p>
-                            </div>
-                        ) : !airQualityData ? (
-                            <div className="flex items-center justify-center h-64">
-                                <p className="text-gray-500">Cargando datos...</p>
-                            </div>
-                        ) : (
-                            <>
-                                {/* Gráfica */}
-                                <LineChart width={600} height={300} data={airQualityData}>
-                                    <XAxis
-                                        dataKey="timestamp"
-                                        tickFormatter={(timestamp) => new Date(timestamp).toLocaleTimeString()}
-                                    />
-                                    <YAxis />
-                                    <Tooltip
-                                        formatter={(value, name, {dataKey}) => {
-                                            const pollutant = POLLUTANT_INFO[dataKey];
-                                            return [pollutant.format(value), pollutant.name];
-                                        }}
-                                        labelFormatter={(timestamp) => new Date(timestamp).toLocaleString()}
-                                    />
-                                    <Legend />
-                                    {Object.entries(POLLUTANT_INFO).map(([key, info]) => (
-                                        <Line
-                                            key={key}
-                                            type="monotone"
-                                            dataKey={key}
-                                            name={info.name}
-                                            stroke={
-                                                key === 'pm25' ? '#8884d8' :
-                                                key === 'pm10' ? '#82ca9d' :
-                                                key === 'no2' ? '#ffc658' :
-                                                key === 'o3' ? '#ff7300' :
-                                                '#ff0000'
-                                            }
-                                            dot={false}
-                                        />
-                                    ))}
-                                </LineChart>
-
-                                {/* Estadísticas Actuales */}
-                                <div className="mt-4">
-                                    <h2 className="text-xl font-bold mb-4">Estadísticas Actuales</h2>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {Object.entries(POLLUTANT_INFO).map(([key, info]) => {
-                                            const currentValue = airQualityData[airQualityData.length - 1][key];
-                                            return (
-                                                <div key={key} className="bg-gray-50 p-4 rounded-lg">
-                                                    <div className="flex justify-between items-center">
-                                                        <h3 className="text-lg font-semibold">
-                                                            {info.name} ({info.unit})
-                                                        </h3>
-                                                        <span
-                                                            className="px-2 py-1 rounded text-sm text-white"
-                                                            style={{ backgroundColor: getPollutantColor(key, currentValue) }}
-                                                        >
-                                                            {getPollutantLevel(key, currentValue)}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-2xl mt-2">
-                                                        {info.format(currentValue)}
-                                                    </p>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </>
-                        )}
+          {/* Estadísticas Actuales */}
+          <div className="mt-4">
+            <h2 className="text-xl font-bold mb-4">Estadísticas Actuales</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {Object.entries(POLLUTANT_INFO).map(([key, info]) => {
+                const currentValue = airQualityData[airQualityData.length - 1][key];
+                return (
+                  <div key={key} className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">
+                        {info.name} ({info.unit})
+                      </h3>
+                      <span
+                        className="px-2 py-1 rounded text-sm text-white"
+                        style={{ backgroundColor: getPollutantColor(key, currentValue) }}
+                      >
+                        {getPollutantLevel(key, currentValue)}
+                      </span>
                     </div>
-                </div>
+                    <p className="text-2xl mt-2">
+                      {info.format(currentValue)}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
 
-            {/* Componente de Condiciones Meteorológicas */}
-            <div className="mt-4">
-                <WeatherConditions weatherData={weatherData} />
-            </div>
-        </div>
+  {/* Componente de Condiciones Meteorológicas */}
+  <div className="mt-4">
+    <WeatherConditions weatherData={weatherData} />
+  </div>
+</div>
     );
 };
 
